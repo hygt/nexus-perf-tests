@@ -39,7 +39,7 @@ done
 RESP_LOG='\n%{url_effective} \n Status: %{http_code} \n Total: %{time_total}\n'
 
 # Add organizations
-for org in `cat order-schemas.txt | cut -d'/' -f1 | sort -r | uniq`; do
+for org in `cat ${BASE}/order-schemas.txt | cut -d'/' -f1 | sort -r | uniq`; do
 	curl -w "${RESP_LOG}" -H "Authorization: Bearer $TOKEN" -XPUT -H "Content-Type: application/json" "${ADMIN_BASE}/orgs/$org" -d '{"name": "some"}'
 done
 
@@ -47,7 +47,7 @@ done
 
 
 # Add projects
-for proj in `cat order-schemas.txt | cut -d'/' -f1,2 | sort -r | uniq`; do
+for proj in `cat ${BASE}/order-schemas.txt | cut -d'/' -f1,2 | sort -r | uniq`; do
 	curl -w "${RESP_LOG}" -H "Authorization: Bearer $TOKEN" -XPUT -H "Content-Type: application/json" "${ADMIN_BASE}/projects/$proj" -d '{"name": "some"}'
 done
 
@@ -70,7 +70,7 @@ done
 sleep 10
 
 # Add schemas
-for i in `cat order-schemas.txt`; do
+for i in `cat ${BASE}/order-schemas.txt`; do
 	org=`echo $i | cut -d'/' -f1`
 	proj=`echo $i | cut -d'/' -f2`
 	curl -w "${RESP_LOG}" -H "Authorization: Bearer $TOKEN" -XPOST -H "Content-Type: application/json" "${KG_BASE}/schemas/$org/$proj" -d @${BASE}/schemas/$i
