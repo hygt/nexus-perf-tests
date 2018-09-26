@@ -12,3 +12,20 @@ The scripts accepts the following parameter:
 ```
 
 Running this script will create projects in organization `perftestorg` with names `perftestproj${i}` where `$i` is project number starting from 1.
+
+
+Running the upload simulation
+
+```
+sbt  'gatling-it:testOnly ch.epfl.bluebrain.nexus.UploadSimulation'
+```
+
+
+You can set following parameters via setting environment variables:
+
+```
+$KG_TOKEN - token 
+$KG_BASE - KG base URL (including v1 prefix)
+$NUM_PROJECTS - number of projects to upload to, each project will have 20 x 10 ^ $i instances loaded into it
+$PARALLEL_USERS - number of parralel user to use during the simulation to upload the data.
+```

@@ -21,27 +21,21 @@ val serviceVersion   = "0.10.15"
 lazy val commonsTest = nexusDep("commons-test", commonsVersion)
 lazy val serviceHttp = nexusDep("service-http", serviceVersion)
 
-
 lazy val perfTests = project
   .in(file("."))
   .enablePlugins(GatlingPlugin)
-  .settings(
-    libraryDependencies ++= Seq(
-      "io.gatling.highcharts" % "gatling-charts-highcharts" % "2.3.1" %  "test,it",
-      "io.gatling"            % "gatling-test-framework"    % "2.3.1" %  "test,it",
-      commonsTest,
-      serviceHttp,
-      "com.lihaoyi"   %% "ammonite-ops" % ammoniteVersion,
-      "io.circe"      %% "circe-core"   % circeVersion,
-      "io.circe"      %% "circe-parser" % circeVersion,
-      "io.circe"      %% "circe-parser" % circeVersion,
-      "org.scalatest" %% "scalatest"    % scalaTestVersion % Test
-    ))
-
+  .settings(libraryDependencies ++= Seq(
+    "io.gatling.highcharts" % "gatling-charts-highcharts" % "2.3.1" % "test,it",
+    "io.gatling"            % "gatling-test-framework"    % "2.3.1" % "test,it",
+    commonsTest,
+    serviceHttp,
+    "com.lihaoyi"           %% "ammonite-ops" % ammoniteVersion,
+    "io.circe"              %% "circe-core"   % circeVersion,
+    "io.circe"              %% "circe-parser" % circeVersion,
+    "io.circe"              %% "circe-parser" % circeVersion,
+    "com.github.pureconfig" %% "pureconfig"   % "0.9.2",
+    "org.scalatest"         %% "scalatest"    % scalaTestVersion % Test
+  ))
 
 def nexusDep(name: String, version: String): ModuleID =
   "ch.epfl.bluebrain.nexus" %% name % version
-
-
-
-
