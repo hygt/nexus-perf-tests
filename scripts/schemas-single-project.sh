@@ -14,12 +14,6 @@ while getopts "a:k:t:r:s:n:" opt; do
     t)
       TOKEN=$OPTARG
       ;;
-    r)
-      USER_REALM=$OPTARG
-      ;;
-    s)
-      USER_SUB=$OPTARG
-      ;;
     n)
       NUM_PROJECTS=$OPTARG
       ;;
@@ -53,7 +47,6 @@ sleep 10
 for i in $(seq 1 $NUM_PROJECTS); do
 # Add context
     curl -w "${RESP_LOG}" -H "Authorization: Bearer $TOKEN" -XPOST -H "Content-Type: application/json" "${KG_BASE}/resources/perftestorg/perftestproj$i/resource" -d @${BASE}/contexts/neurosciencegraph/core/schema.json
-#    curl -w "${RESP_LOG}" -H "Authorization: Bearer $TOKEN" -XPOST -H "Content-Type: application/json" "${KG_BASE}/resolvers/perftestorg/perftestproj$i" -d '{"@id": "http://example.com/neurosciencegraph/'$proj'/cross/resolver", "@type": ["Resolver", "CrossProject"], "projects": ["nexus/schemaorgsh", "nexus/schemaorg", "nexus/provsh", "nexus/core", "neurosciencegraph/commons", "neurosciencegraph/core", "neurosciencegraph/electrophysiology", "neurosciencegraph/experiment"], "identities": [{"@type": "UserRef", "realm": "'${USER_REALM}'", "sub": "'${USER_SUB}'"} ], "priority": 20 }'
     for s in `cat ${BASE}/order-schemas.txt`; do
 	    curl -w "${RESP_LOG}" -H "Authorization: Bearer $TOKEN" -XPOST -H "Content-Type: application/json" "${KG_BASE}/schemas/perftestorg/perftestproj$i" -d @${BASE}/schemas/$s
     done
