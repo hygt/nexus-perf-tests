@@ -19,9 +19,8 @@ import scala.collection.concurrent.TrieMap
   *
   * @param provTemplate  the provided provenance template
   */
-class ResourcesGenerator(provTemplate: Seq[LocalData], ids: collection.concurrent.Map[String, AtomicLong])(implicit settings: Settings) {
-
-
+class ResourcesGenerator(provTemplate: Seq[LocalData], ids: collection.concurrent.Map[String, AtomicLong])(
+    implicit settings: Settings) {
 
   /**
     * Generates a number of resources equal to ''total'' randomly generated from the ''provTemplate''
@@ -42,9 +41,7 @@ class ResourcesGenerator(provTemplate: Seq[LocalData], ids: collection.concurren
     (0 until times).foldLeft((List.empty[LocalData], Map.empty[String, String])) {
       case ((dataList, map), _) =>
         val instanceId = ids.getOrElseUpdate(data.schema.toString(), new AtomicLong()).incrementAndGet()
-        val newId = data.schema.append(Addr(s"ids/$instanceId")).toString()
-
-
+        val newId      = data.schema.append(Addr(s"ids/$instanceId")).toString()
         val newData =
           data.copy(id = newId, payload = replace(data.payload, data.id, newId))
         (newData :: dataList, map + (data.id -> newId))
@@ -86,6 +83,7 @@ class ResourcesGenerator(provTemplate: Seq[LocalData], ids: collection.concurren
   }
 
   private def uuid: String = UUID.randomUUID().toString
+
 }
 
 object ResourcesGenerator {
@@ -103,7 +101,6 @@ object ResourcesGenerator {
     val ids = TrieMap[String, AtomicLong]()
     if (resources % 20 != 0) Left(InvalidResourcesNumber)
     else
-
       provTemplate.map { template =>
         List.fill(orgs)(genString(length = 6)).foldLeft(List.empty[LocalData]) {
           case (acc, org) =>
@@ -142,4 +139,5 @@ object ResourcesGenerator {
       extends GenerationError(s"Need to map the schema: '$schemas' in path '$resource'")
   final case class WrongFormat(resource: BasePath)
       extends GenerationError(s"Resource in path '$resource' is not in JSON format")
+
 }

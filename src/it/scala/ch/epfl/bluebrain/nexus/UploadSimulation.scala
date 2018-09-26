@@ -36,9 +36,10 @@ class UploadSimulation extends Simulation {
     "wholecellpatchclamp"   -> "https://bluebrain.github.io/nexus/schemas/experiment/wholecellpatchclamp"
   )
   val settings: Settings = Settings(Uri("http://example.com/ids/"), map)
-  val data =
-    (1 to numProjects).flatMap{i =>
-      ResourcesGenerator(1, Math.pow(10, i).toInt, 20)(settings).right.get.map((i, _))}
+
+  val data = 1 to numProjects flatMap { i =>
+    ResourcesGenerator(1, Math.pow(10, i).toInt, 20)(settings).right.get.map((i, _))
+  }
 
   val feeder = data
     .map {
