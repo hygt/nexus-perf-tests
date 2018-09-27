@@ -22,10 +22,7 @@
     "nsg:StimulusExperiment"
   ],
   "stimulus": {
-    "rdf:type": {
-      "@id": "http://www.FIXME.org/ephys_stimuli/0000001",
-      "label": "ADHPdepol"
-    }
+    "@type": "http://www.FIXME.org/ephys_stimuli/0000001"
   },
   "used": [
     {

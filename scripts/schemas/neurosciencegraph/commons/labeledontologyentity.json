@@ -17,8 +17,7 @@
           "path": "rdfs:label",
           "name": "Label",
           "description": "Human readable label.",
-          "datatype": "xsd:string",
-          "minCount": 1
+          "datatype": "xsd:string"
         }
       ]
     }
