@@ -22,7 +22,8 @@ class Settings(config: Config) extends Extension {
   val appConfig = AppConfig(
     loadConfigOrThrow[HttpConfig](config, "app.http"),
     loadConfigOrThrow[KgConfig](config, "app.kg"),
-    loadConfigOrThrow[UploadConfig](config, "app.upload")
+    loadConfigOrThrow[UploadConfig](config, "app.upload"),
+    loadConfigOrThrow[FetchConfig](config, "app.fetch")
   )
 
 }
