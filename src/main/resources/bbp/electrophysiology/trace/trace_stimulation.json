@@ -5,7 +5,10 @@
     "dataUnit": "https://bbp-nexus.epfl.ch/vocabs/bbp/neurosciencegraph/core/v0.1.0/dataUnit",
     "providerId": "https://bbp-nexus.epfl.ch/vocabs/bbp/neurosciencegraph/core/v0.1.0/providerId",
     "projectName": "https://bbp-nexus.epfl.ch/vocabs/bbp/neurosciencegraph/core/v0.1.0/projectName",
-    "retrievalDate": "https://bbp-nexus.epfl.ch/vocabs/bbp/neurosciencegraph/core/v0.1.0/retrievalDate",
+    "retrievalDate": {
+      "@id": "https://bbp-nexus.epfl.ch/vocabs/bbp/neurosciencegraph/core/v0.1.0/retrievalDate",
+      "@type": "http://www.w3.org/2001/XMLSchema#dateTime"
+    },
     "citation": "https://bbp-nexus.epfl.ch/vocabs/bbp/neurosciencegraph/core/v0.1.0/citation",
     "description": "http://schema.org/description",
     "name": "http://schema.org/name",

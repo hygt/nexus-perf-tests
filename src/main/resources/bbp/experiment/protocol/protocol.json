@@ -1,7 +1,10 @@
 {
   "@context": {
     "@vocab": "https://bbp-nexus.epfl.ch/vocabs/bbp/neurosciencegraph/core/v0.1.0/",
-    "datePublished": "http://schema.org/datePublished",
+    "datePublished": {
+      "@id": "http://schema.org/datePublished",
+      "@type": "http://www.w3.org/2001/XMLSchema#dateTime"
+    },
     "description": "http://schema.org/description",
     "identifier": "http://schema.org/identifier",
     "name": "http://schema.org/name",

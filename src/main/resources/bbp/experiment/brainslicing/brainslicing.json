@@ -8,7 +8,10 @@
         "label": "http://www.w3.org/2000/01/rdf-schema#label",
         "nsg": "https://bbp-nexus.epfl.ch/vocabs/bbp/neurosciencegraph/core/v0.1.0/",
         "prov": "http://www.w3.org/ns/prov#",
-        "startedAtTime": "http://www.w3.org/ns/prov#startedAtTime",
+        "startedAtTime": {
+            "@id": "http://www.w3.org/ns/prov#startedAtTime",
+            "@type":"http://www.w3.org/2001/XMLSchema#dateTime"
+        },
         "used": "http://www.w3.org/ns/prov#used",
         "wasAssociatedWith": "http://www.w3.org/ns/prov#wasAssociatedWith",
         "wasStartedBy": "http://www.w3.org/ns/prov#wasStartedBy"

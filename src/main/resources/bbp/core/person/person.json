@@ -9,6 +9,6 @@
   },
   "@id": "local_b147cbfa-96f1-41a9-8ac6-8c049f158ef7",
   "@type": "nsg:Person",
-  "familyName": "Toledo",
+  "familyName": "Lastname",
   "givenName": "{{agent_givenName}}"
 }
