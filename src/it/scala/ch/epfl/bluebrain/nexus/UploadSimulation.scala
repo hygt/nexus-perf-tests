@@ -7,13 +7,14 @@ import ch.epfl.bluebrain.nexus.config.Settings
 import ch.epfl.bluebrain.nexus.data.generation.ResourcesGenerator
 import ch.epfl.bluebrain.nexus.data.generation.types.{Settings => GenerationSettings}
 import com.typesafe.config.ConfigFactory
+import io.circe.Json
+import io.circe.parser.parse
 import io.gatling.core.Predef._
 import io.gatling.http.Predef._
 
-
 class UploadSimulation extends Simulation {
 
-  val config = new Settings(ConfigFactory.parseResources("perf-tests.conf").resolve()).appConfig
+  val config        = new Settings(ConfigFactory.parseResources("perf-tests.conf").resolve()).appConfig
   val numProjects   = config.uploadConfig.projects
   val parallelUsers = config.uploadConfig.parallelUsers
 
@@ -38,14 +39,32 @@ class UploadSimulation extends Simulation {
   }
 
   val feeder = data
-    .map {
-      case (project, instance) =>
-        Map(
-          "payload"          -> instance.payload,
-          "project"          -> project,
-          "schema"           -> URLEncoder.encode(instance.schema.toString, "UTF-8"),
-          "schemaNonEncoded" -> instance.schema.toString
+    .flatMap {
+      case (project, instance) if instance.schema.toString() == "https://bluebrain.github.io/nexus/schemas/experiment/wholecellpatchclamp" =>
+        List(
+          Map(
+            "payload"          -> instance.payload,
+            "project"          -> project,
+            "schema"           -> URLEncoder.encode(instance.schema.toString, "UTF-8"),
+            "schemaNonEncoded" -> instance.schema.toString
+          ),
+          Map(
+            "payload"          -> parse(instance.payload).right.get.mapObject{ obj =>
+              obj.add("@id", Json.fromString(s"${obj("@id").get.asString.get}/resource"))
+            },
+            "project"          -> project,
+            "schema"           -> "resource",
+            "schemaNonEncoded" -> "resource"
+          )
         )
+      case (project, instance) =>
+        List(
+          Map(
+            "payload"          -> instance.payload,
+            "project"          -> project,
+            "schema"           -> URLEncoder.encode(instance.schema.toString, "UTF-8"),
+            "schemaNonEncoded" -> instance.schema.toString
+          ))
     }
     .toArray
     .queue
