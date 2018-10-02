@@ -31,15 +31,18 @@ class ResourcesGenerator(provTemplate: Seq[LocalData], ids: collection.concurren
     */
   final def apply(total: Int): ListBuffer[LocalData] = {
     val x: Int = total / 20
-    val (list, m) = provTemplate.foldLeft((ListBuffer.empty[LocalData], Map.empty[String, String])) {
-      case ((accData, accMap), data) =>
-        val (resL, resM) = generate(numOfDuplicates(data.path, x), data)
-        (accData ++ resL, resM ++ accMap)
+    val list   = ListBuffer.empty[LocalData]
+    val map    = mutable.Map.empty[String, String]
+    provTemplate.foreach { data =>
+      val (resL, resM) = generate(numOfDuplicates(data.path, x), data)
+      list ++= resL
+      resM.foreach { case (k, v) => map.update(k, v) }
     }
-    list.map(_.withReplacement(m))
+    list.map(_.withReplacement(map.toMap))
+    list
   }
 
-  private def generate(times: Int, data: LocalData): (ListBuffer[LocalData], Map[String, String]) = {
+  private def generate(times: Int, data: LocalData): (ListBuffer[LocalData], mutable.Map[String, String]) = {
     val dataList = ListBuffer.empty[LocalData]
     val map      = mutable.Map.empty[String, String]
     (0 until times).foreach { _ =>
@@ -49,7 +52,7 @@ class ResourcesGenerator(provTemplate: Seq[LocalData], ids: collection.concurren
       dataList += newData
       map.update(data.id, newId)
     }
-    (dataList, map.toMap)
+    (dataList, map)
   }
 
   private def replace(payload: String, id: String, newId: String): String = {
@@ -108,16 +111,17 @@ object ResourcesGenerator {
       provTemplate.map { template =>
         val acc = ListBuffer.empty[LocalData]
         List.fill(orgs)(genString(length = 6)).foreach { org =>
-            List
-              .fill(provTemplates)((genString(length = 8), genString(length = 8), genString(length = 8)))
-              .foreach { case (core, electro, experiment) =>
-                  val transformedTemplate = template.map {
-                    case data if data.project == "core"              => data.copy(project = core, org = org)
-                    case data if data.project == "electrophysiology" => data.copy(project = electro, org = org)
-                    case data if data.project == "experiment"        => data.copy(project = experiment, org = org)
-                  }
-                  acc ++= new ResourcesGenerator(transformedTemplate, ids).apply(resources)
-              }
+          List
+            .fill(provTemplates)((genString(length = 8), genString(length = 8), genString(length = 8)))
+            .foreach {
+              case (core, electro, experiment) =>
+                val transformedTemplate = template.map {
+                  case data if data.project == "core"              => data.copy(project = core, org = org)
+                  case data if data.project == "electrophysiology" => data.copy(project = electro, org = org)
+                  case data if data.project == "experiment"        => data.copy(project = experiment, org = org)
+                }
+                acc ++= new ResourcesGenerator(transformedTemplate, ids).apply(resources)
+            }
         }
         acc
       }
