@@ -21,7 +21,7 @@ class ResourceGeneratorSpec extends WordSpecLike with Matchers with EitherValues
       "subject"               -> "https://bluebrain.github.io/nexus/schemas/neurosciencegraph/core/subject",
       "wholecellpatchclamp"   -> "https://bluebrain.github.io/nexus/schemas/experiment/wholecellpatchclamp"
     )
-    val settings: Settings = Settings(Uri("http://example.com/ids/"), map)
+    val settings: Settings = Settings(Uri("https://bluebrain.github.io/nexus/schemas/"), map)
 
     "fail when resources is not multiple of 20" in {
       ResourcesGenerator(1, 1, 15)(settings).left.value shouldEqual InvalidResourcesNumber
