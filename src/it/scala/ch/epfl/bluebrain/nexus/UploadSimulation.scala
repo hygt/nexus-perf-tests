@@ -70,7 +70,7 @@ class UploadSimulation extends Simulation {
     .queue
 
   val httpConf = http
-    .baseURL(config.kg.base.toString) // Here is the root for all relative URLs
+    .baseUrl(config.kg.base.toString) // Here is the root for all relative URLs
     .authorizationHeader(s"Bearer ${config.http.token}")
 
   val scn = scenario("fetching data")

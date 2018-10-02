@@ -1,6 +1,6 @@
 enablePlugins(GatlingPlugin)
 
-scalaVersion := "2.12.4"
+scalaVersion := "2.12.7"
 
 scalacOptions := Seq("-encoding",
                      "UTF-8",
@@ -11,12 +11,12 @@ scalacOptions := Seq("-encoding",
                      "-language:implicitConversions",
                      "-language:postfixOps")
 
-val ammoniteVersion  = "1.1.2"
-val circeVersion     = "0.9.3"
-val commonsVersion   = "0.10.22"
+val ammoniteVersion  = "1.2.1"
+val circeVersion     = "0.10.0"
+val commonsVersion   = "0.10.30"
 val scalaTestVersion = "3.0.5"
-val akkaVersion      = "2.5.14"
-val serviceVersion   = "0.10.15"
+val akkaVersion      = "2.5.17"
+val serviceVersion   = "0.10.16"
 
 lazy val commonsTest = nexusDep("commons-test", commonsVersion)
 lazy val serviceHttp = nexusDep("service-http", serviceVersion)
@@ -25,8 +25,8 @@ lazy val perfTests = project
   .in(file("."))
   .enablePlugins(GatlingPlugin)
   .settings(libraryDependencies ++= Seq(
-    "io.gatling.highcharts" % "gatling-charts-highcharts" % "2.3.1" % "test,it",
-    "io.gatling"            % "gatling-test-framework"    % "2.3.1" % "test,it",
+    "io.gatling.highcharts" % "gatling-charts-highcharts" % "3.0.0-RC3" % "test,it",
+    "io.gatling"            % "gatling-test-framework"    % "3.0.0-RC3" % "test,it",
     commonsTest,
     serviceHttp,
     "com.lihaoyi"           %% "ammonite-ops" % ammoniteVersion,
@@ -37,5 +37,4 @@ lazy val perfTests = project
     "org.scalatest"         %% "scalatest"    % scalaTestVersion % Test
   ))
 
-def nexusDep(name: String, version: String): ModuleID =
-  "ch.epfl.bluebrain.nexus" %% name % version
+def nexusDep(name: String, version: String): ModuleID = "ch.epfl.bluebrain.nexus" %% name % version
