@@ -27,9 +27,9 @@ class ResourcesGenerator(provTemplate: Seq[LocalData], ids: collection.concurren
     *
     * @param total the amount of resources to be generated
     */
-  final def apply(total: Int): List[LocalData] = {
+  final def apply(total: Int): Vector[LocalData] = {
     val x: Int = total / 20
-    val (list, m) = provTemplate.foldLeft((List.empty[LocalData], Map.empty[String, String])) {
+    val (list, m) = provTemplate.foldLeft((Vector.empty[LocalData], Map.empty[String, String])) {
       case ((accData, accMap), data) =>
         val (resL, resM) = generate(numOfDuplicates(data.path, x), data)
         (accData ++ resL, resM ++ accMap)
@@ -37,14 +37,14 @@ class ResourcesGenerator(provTemplate: Seq[LocalData], ids: collection.concurren
     list.map(_.withReplacement(m))
   }
 
-  private def generate(times: Int, data: LocalData): (List[LocalData], Map[String, String]) = {
-    (0 until times).foldLeft((List.empty[LocalData], Map.empty[String, String])) {
+  private def generate(times: Int, data: LocalData): (Vector[LocalData], Map[String, String]) = {
+    (0 until times).foldLeft((Vector.empty[LocalData], Map.empty[String, String])) {
       case ((dataList, map), _) =>
         val instanceId = ids.getOrElseUpdate(data.schema.toString(), new AtomicLong()).incrementAndGet()
         val newId      = data.schema.append(Addr(s"ids/$instanceId")).toString()
         val newData =
           data.copy(id = newId, payload = replace(data.payload, data.id, newId))
-        (newData :: dataList, map + (data.id -> newId))
+        (dataList :+ newData, map + (data.id -> newId))
     }
   }
 
@@ -97,12 +97,12 @@ object ResourcesGenerator {
     * @param resources      the amount of resources to be created per prov template. This value should be multiple of 20.
     */
   final def apply(orgs: Int, provTemplates: Int, resources: Int)(
-      implicit settings: Settings): Either[GenerationError, List[LocalData]] = {
+      implicit settings: Settings): Either[GenerationError, Vector[LocalData]] = {
     val ids = TrieMap[String, AtomicLong]()
     if (resources % 20 != 0) Left(InvalidResourcesNumber)
     else
       provTemplate.map { template =>
-        List.fill(orgs)(genString(length = 6)).foldLeft(List.empty[LocalData]) {
+        List.fill(orgs)(genString(length = 6)).foldLeft(Vector.empty[LocalData]) {
           case (acc, org) =>
             List
               .fill(provTemplates)((genString(length = 8), genString(length = 8), genString(length = 8)))
@@ -119,13 +119,13 @@ object ResourcesGenerator {
       }
   }
 
-  private def provTemplate(implicit s: Settings): Either[GenerationError, List[LocalData]] =
+  private def provTemplate(implicit s: Settings): Either[GenerationError, Vector[LocalData]] =
     (ls.rec ! pwd / "src" / "main" / "resources" / "bbp")
       .filter(_.isFile)
-      .foldLeft[Either[GenerationError, List[LocalData]]](Right(List.empty)) {
+      .foldLeft[Either[GenerationError, Vector[LocalData]]](Right(Vector.empty)) {
         case (Right(acc), path) =>
           LocalData(path) match {
-            case data: LocalData           => Right(data :: acc)
+            case data: LocalData           => Right(acc :+ data)
             case data: FailedDataFormat    => Left(WrongFormat(data.path))
             case data: FailedDataSchemaMap => Left(SchemaNotMapped(data.path, data.schema))
           }
