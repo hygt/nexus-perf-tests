@@ -23,7 +23,8 @@ class Settings(config: Config) extends Extension {
     loadConfigOrThrow[HttpConfig](config, "app.http"),
     loadConfigOrThrow[KgConfig](config, "app.kg"),
     loadConfigOrThrow[UploadConfig](config, "app.upload"),
-    loadConfigOrThrow[FetchConfig](config, "app.fetch")
+    loadConfigOrThrow[FetchConfig](config, "app.fetch"),
+    loadConfigOrThrow[UpdateConfig](config, "app.update")
   )
 
 }

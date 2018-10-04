@@ -40,7 +40,8 @@ class UploadSimulation extends Simulation {
 
   val feeder = data
     .flatMap {
-      case (project, instance) if instance.schema.toString() == "https://bluebrain.github.io/nexus/schemas/experiment/wholecellpatchclamp" =>
+      case (project, instance)
+          if instance.schema.toString() == "https://bluebrain.github.io/nexus/schemas/experiment/wholecellpatchclamp" =>
         List(
           Map(
             "payload"          -> instance.payload,
@@ -49,7 +50,7 @@ class UploadSimulation extends Simulation {
             "schemaNonEncoded" -> instance.schema.toString
           ),
           Map(
-            "payload"          -> parse(instance.payload).right.get.mapObject{ obj =>
+            "payload" -> parse(instance.payload).right.get.mapObject { obj =>
               obj.add("@id", Json.fromString(s"${obj("@id").get.asString.get}/resource"))
             },
             "project"          -> project,
