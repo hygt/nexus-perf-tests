@@ -5,7 +5,7 @@ import java.util.concurrent.ThreadLocalRandom
 import ch.epfl.bluebrain.nexus.config.Settings
 import com.typesafe.config.ConfigFactory
 import io.gatling.core.Predef._
-import io.gatling.http.Predef.{jsonPath, _}
+import io.gatling.http.Predef._
 
 class GetByRevSimulation extends Simulation {
   val config = new Settings(ConfigFactory.parseResources("perf-tests.conf").resolve()).appConfig
@@ -26,7 +26,7 @@ class GetByRevSimulation extends Simulation {
   ).toArray.circular
 
   val httpConf = http
-    .baseURL(config.kg.base.toString) // Here is the root for all relative URLs
+    .baseUrl(config.kg.base.toString) // Here is the root for all relative URLs
     .authorizationHeader(s"Bearer ${config.http.token}")
 
   val project         = config.fetchConfig.project

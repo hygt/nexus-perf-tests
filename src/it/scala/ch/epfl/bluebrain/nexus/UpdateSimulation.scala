@@ -29,7 +29,7 @@ class UpdateSimulation extends Simulation {
   ).toArray.circular
 
   val httpConf = http
-    .baseURL(config.kg.base.toString) // Here is the root for all relative URLs
+    .baseUrl(config.kg.base.toString) // Here is the root for all relative URLs
     .authorizationHeader(s"Bearer ${config.http.token}")
 
   val project = config.updateConfig.project
@@ -51,12 +51,9 @@ class UpdateSimulation extends Simulation {
       val s = session("schema").as[String]
       session.set("encodedSchema", URLEncoder.encode(s, "UTF-8"))
     }
-    .exec(
-      http("list ${schema}")
-        .get(s"/resources/perftestorg/perftestproj$project/$${encodedSchema}")
-        check (jsonPath("$.._total")
-          .ofType[Int]
-          .saveAs("search_total")))
+    .exec(http("list ${schema}")
+      .get(s"/resources/perftestorg/perftestproj$project/$${encodedSchema}")
+      check jsonPath("$.._total").ofType[Int].saveAs("search_total"))
     .repeat(repeatCountExpression, "instanceNumber")(
       exec { session =>
         val s              = session("schema").as[String]
@@ -74,7 +71,7 @@ class UpdateSimulation extends Simulation {
         )
         .asLongAs(revisionExpression)(
           exec { session =>
-            val json     = parse(session.get("savedPayload").as[String]).right.get
+            val json     = parse(session("savedPayload").as[String]).right.get
             val revision = json.asObject.getOrElse(JsonObject())("_rev").flatMap(_.asNumber).flatMap(_.toInt).get
             val update = json.mapObject { obj =>
               obj
