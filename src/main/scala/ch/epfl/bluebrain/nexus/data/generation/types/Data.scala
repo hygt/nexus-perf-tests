@@ -7,12 +7,15 @@ import ammonite.ops._
 import io.circe.Json
 import io.circe.parser._
 
+import scala.collection.mutable
+
 /**
   * Data type which holds the instance information
   */
 sealed trait Data extends Product with Serializable {
   def path: BasePath
 }
+
 object Data extends DataNeighbours {
 
   /**
@@ -51,7 +54,7 @@ object Data extends DataNeighbours {
       extends Data {
     def relationEdges: List[(String, String)] = relationships.map(id -> _)
 
-    def withReplacement(map: Map[String, String]): LocalData = {
+    def withReplacement(map: mutable.Map[String, String]): LocalData = {
       val replacements = relationships.map(v => v -> map.get(v)).collect {
         case (original, Some(replacement)) => original -> replacement
       }
@@ -64,7 +67,7 @@ object Data extends DataNeighbours {
 
   }
 
-  private def replace(strings: List[String], map: Map[String, String]): List[String] =
+  private def replace(strings: List[String], map: mutable.Map[String, String]): List[String] =
     strings.map(string => map.getOrElse(string, string))
 
   object LocalData {

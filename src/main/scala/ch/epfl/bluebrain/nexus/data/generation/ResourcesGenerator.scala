@@ -6,45 +6,41 @@ import java.util.regex.Pattern
 
 import ammonite.ops._
 import ch.epfl.bluebrain.nexus.commons.test.Randomness._
-import ch.epfl.bluebrain.nexus.data.generation.types.Data.{FailedDataFormat, FailedDataSchemaMap, LocalData}
+import ch.epfl.bluebrain.nexus.data.generation.types.Data.LocalData
 import ch.epfl.bluebrain.nexus.data.generation.types.Settings
 import ch.epfl.bluebrain.nexus.service.http.UriOps._
 import ch.epfl.bluebrain.nexus.service.http.{Path => Addr}
-import journal.Logger
 
 import scala.collection.concurrent.TrieMap
+import scala.collection.mutable
 
 /**
-  * Class that generates resources randomly based on a provided provenance template.
+  * Class that generates resources randomly based on a provided provenance templates.
   *
-  * @param provTemplate  the provided provenance template
+  * @param templates the provided provenance templates
   */
-class ResourcesGenerator(provTemplate: Seq[LocalData], ids: collection.concurrent.Map[String, AtomicLong])(
-    implicit settings: Settings) {
+class ResourcesGenerator(templates: Stream[LocalData], ids: TrieMap[String, AtomicLong])(implicit settings: Settings) {
 
   /**
     * Generates a number of resources equal to ''total'' randomly generated from the ''provTemplate''
     *
     * @param total the amount of resources to be generated
     */
-  final def apply(total: Int): Vector[LocalData] = {
+  final def apply(total: Int): Stream[LocalData] = {
     val x: Int = total / 20
-    val (list, m) = provTemplate.foldLeft((Vector.empty[LocalData], Map.empty[String, String])) {
-      case ((accData, accMap), data) =>
-        val (resL, resM) = generate(numOfDuplicates(data.path, x), data)
-        (accData ++ resL, resM ++ accMap)
-    }
-    list.map(_.withReplacement(m))
+    val map    = mutable.Map.empty[String, String]
+    templates
+      .flatMap { data => generate(numOfDuplicates(data.path, x), data, map)
+      }
+      .map(_.withReplacement(map))
   }
 
-  private def generate(times: Int, data: LocalData): (Vector[LocalData], Map[String, String]) = {
-    (0 until times).foldLeft((Vector.empty[LocalData], Map.empty[String, String])) {
-      case ((dataList, map), _) =>
-        val instanceId = ids.getOrElseUpdate(data.schema.toString(), new AtomicLong()).incrementAndGet()
-        val newId      = data.schema.append(Addr(s"ids/$instanceId")).toString()
-        val newData =
-          data.copy(id = newId, payload = replace(data.payload, data.id, newId))
-        (dataList :+ newData, map + (data.id -> newId))
+  private def generate(times: Int, data: LocalData, map: mutable.Map[String, String]): Stream[LocalData] = {
+    (1 to times).toStream.map { _ =>
+      val instanceId = ids.getOrElseUpdate(data.schema.toString, new AtomicLong).incrementAndGet
+      val newId      = data.schema.append(Addr(s"ids/$instanceId")).toString
+      map.update(data.id, newId)
+      data.copy(id = newId, payload = replace(data.payload, data.id, newId))
     }
   }
 
@@ -87,7 +83,6 @@ class ResourcesGenerator(provTemplate: Seq[LocalData], ids: collection.concurren
 }
 
 object ResourcesGenerator {
-  val logger: Logger = Logger[this.type]
 
   /**
     * Generates a number of resources equal to ''total'' randomly generated from the ''provTemplate''
@@ -96,48 +91,28 @@ object ResourcesGenerator {
     * @param provTemplates  the amount of prov templates.
     * @param resources      the amount of resources to be created per prov template. This value should be multiple of 20.
     */
-  final def apply(orgs: Int, provTemplates: Int, resources: Int)(
-      implicit settings: Settings): Either[GenerationError, Vector[LocalData]] = {
-    val ids = TrieMap[String, AtomicLong]()
-    if (resources % 20 != 0) Left(InvalidResourcesNumber)
-    else
-      provTemplate.map { template =>
-        List.fill(orgs)(genString(length = 6)).foldLeft(Vector.empty[LocalData]) {
-          case (acc, org) =>
-            List
-              .fill(provTemplates)((genString(length = 8), genString(length = 8), genString(length = 8)))
-              .foldLeft(acc) {
-                case (accProject, (core, electro, experiment)) =>
-                  val transformedTemplate = template.map {
-                    case data if data.project == "core"              => data.copy(project = core, org = org)
-                    case data if data.project == "electrophysiology" => data.copy(project = electro, org = org)
-                    case data if data.project == "experiment"        => data.copy(project = experiment, org = org)
-                  }
-                  accProject ++ new ResourcesGenerator(transformedTemplate, ids).apply(resources)
-              }
-        }
-      }
+  final def apply(templates: Templates, orgs: Int, provTemplates: Int, resources: Int)(
+      implicit settings: Settings): Stream[LocalData] = {
+    require(resources % 20 == 0, "Amount of resources should be multiple of 20")
+
+    val ids = TrieMap.empty[String, AtomicLong]
+    Stream.fill(orgs)(genString(length = 6)).flatMap { org =>
+      val transformed = transform(org, templates, provTemplates, resources)
+      new ResourcesGenerator(transformed, ids).apply(resources)
+    }
   }
 
-  private def provTemplate(implicit s: Settings): Either[GenerationError, Vector[LocalData]] =
-    (ls.rec ! pwd / "src" / "main" / "resources" / "bbp")
-      .filter(_.isFile)
-      .foldLeft[Either[GenerationError, Vector[LocalData]]](Right(Vector.empty)) {
-        case (Right(acc), path) =>
-          LocalData(path) match {
-            case data: LocalData           => Right(acc :+ data)
-            case data: FailedDataFormat    => Left(WrongFormat(data.path))
-            case data: FailedDataSchemaMap => Left(SchemaNotMapped(data.path, data.schema))
+  private def transform(org: String, templates: Templates, provTemplates: Int, resources: Int): Stream[LocalData] = {
+    Stream
+      .fill(provTemplates)((genString(length = 8), genString(length = 8), genString(length = 8)))
+      .flatMap {
+        case (core, electro, experiment) =>
+          templates.value.toStream.map {
+            case data if data.project == "core"              => data.copy(project = core, org = org)
+            case data if data.project == "electrophysiology" => data.copy(project = electro, org = org)
+            case data if data.project == "experiment"        => data.copy(project = experiment, org = org)
           }
-        case (err @ Left(_), _) => err
       }
-
-  sealed abstract class GenerationError(message: String) extends Exception(message)
-
-  final case object InvalidResourcesNumber extends GenerationError("Amount of resources should be multiple of 20")
-  final case class SchemaNotMapped(resource: BasePath, schemas: String)
-      extends GenerationError(s"Need to map the schema: '$schemas' in path '$resource'")
-  final case class WrongFormat(resource: BasePath)
-      extends GenerationError(s"Resource in path '$resource' is not in JSON format")
+  }
 
 }

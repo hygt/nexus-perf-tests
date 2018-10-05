@@ -17,7 +17,7 @@ object AppConfig {
 
   final case class KgConfig(base: Uri)
 
-  final case class UploadConfig(projects: Int, parallelUsers: Int)
+  final case class UploadConfig(project: Int, size: Int, parallelUsers: Int)
 
   final case class FetchConfig(project: Int, duration: FiniteDuration, reads: Int, writes: Int, users: Int)
 

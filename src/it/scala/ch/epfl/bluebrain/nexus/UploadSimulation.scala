@@ -4,7 +4,7 @@ import java.net.URLEncoder
 
 import akka.http.scaladsl.model.Uri
 import ch.epfl.bluebrain.nexus.config.Settings
-import ch.epfl.bluebrain.nexus.data.generation.ResourcesGenerator
+import ch.epfl.bluebrain.nexus.data.generation.{ResourcesGenerator, Templates}
 import ch.epfl.bluebrain.nexus.data.generation.types.{Settings => GenerationSettings}
 import com.typesafe.config.ConfigFactory
 import io.circe.Json
@@ -14,11 +14,12 @@ import io.gatling.http.Predef._
 
 class UploadSimulation extends Simulation {
 
-  val config        = new Settings(ConfigFactory.parseResources("perf-tests.conf").resolve()).appConfig
-  val numProjects   = config.uploadConfig.projects
-  val parallelUsers = config.uploadConfig.parallelUsers
+  private val config        = new Settings(ConfigFactory.parseResources("perf-tests.conf").resolve()).appConfig
+  private val projectNumber = config.uploadConfig.project
+  private val size: Int     = config.uploadConfig.size / 20
+  private val parallelUsers = config.uploadConfig.parallelUsers
 
-  val map = Map[String, Uri](
+  private val map = Map[String, Uri](
     "person"                -> "https://bluebrain.github.io/nexus/schemas/neurosciencegraph/core/person",
     "stimulusexperiment"    -> "https://bluebrain.github.io/nexus/schemas/neurosciencegraph/stimulusexperiment",
     "trace"                 -> "https://bluebrain.github.io/nexus/schemas/neurosciencegraph/trace",
@@ -32,20 +33,16 @@ class UploadSimulation extends Simulation {
     "subject"               -> "https://bluebrain.github.io/nexus/schemas/neurosciencegraph/core/subject",
     "wholecellpatchclamp"   -> "https://bluebrain.github.io/nexus/schemas/experiment/wholecellpatchclamp"
   )
-  val settings: GenerationSettings = GenerationSettings(Uri("http://example.com/ids/"), map)
+  private val settings: GenerationSettings = GenerationSettings(Uri("http://example.com/ids/"), map)
+  private val templates                    = Templates(settings)
 
-  val data = 1 to numProjects flatMap { i =>
-    ResourcesGenerator(1, Math.pow(10, i).toInt, 20)(settings).right.get.map((i, _))
-  }
-
-  val feeder = data
-    .flatMap {
-      case (project, instance)
-          if instance.schema.toString() == "https://bluebrain.github.io/nexus/schemas/experiment/wholecellpatchclamp" =>
-        List(
+  private def feeder = ResourcesGenerator(templates, 1, size, 20)(settings)
+    .flatMap { instance =>
+      if (instance.schema.toString == "https://bluebrain.github.io/nexus/schemas/experiment/wholecellpatchclamp") {
+        Stream(
           Map(
             "payload"          -> instance.payload,
-            "project"          -> project,
+            "project"          -> projectNumber,
             "schema"           -> URLEncoder.encode(instance.schema.toString, "UTF-8"),
             "schemaNonEncoded" -> instance.schema.toString
           ),
@@ -53,30 +50,29 @@ class UploadSimulation extends Simulation {
             "payload" -> parse(instance.payload).right.get.mapObject { obj =>
               obj.add("@id", Json.fromString(s"${obj("@id").get.asString.get}/resource"))
             },
-            "project"          -> project,
+            "project"          -> projectNumber,
             "schema"           -> "resource",
             "schemaNonEncoded" -> "resource"
           )
         )
-      case (project, instance) =>
-        List(
+      } else {
+        Stream(
           Map(
             "payload"          -> instance.payload,
-            "project"          -> project,
+            "project"          -> projectNumber,
             "schema"           -> URLEncoder.encode(instance.schema.toString, "UTF-8"),
             "schemaNonEncoded" -> instance.schema.toString
           ))
+      }
     }
-    .toArray
-    .queue
 
-  val httpConf = http
+  private val httpConf = http
     .baseUrl(config.kg.base.toString) // Here is the root for all relative URLs
     .authorizationHeader(s"Bearer ${config.http.token}")
 
-  val scn = scenario("fetching data")
-    .repeat(data.size / parallelUsers) {
-      feed(feeder)
+  private val scn = scenario("upload")
+    .repeat(size / parallelUsers) {
+      feed(feeder.iterator)
         .exec(
           http("post to ${schemaNonEncoded}")
             .post("/resources/perftestorg/perftestproj${project}/${schema}")
